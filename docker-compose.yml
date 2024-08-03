@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "8888:8888"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://postgres:password@postgres:5432/mydatabase
+      - PORT=8888
+      - NODE_OPTIONS=--openssl-legacy-provider
+      - JWT_SECRET=secret_key_1234
+
+    command: sh -c "npm install && npm run dev"
+
+    networks:
+      - server-network
+
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://backend:8888/api
+      - NODE_OPTIONS=--openssl-legacy-provider
+
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydatabase
+    networks:
+      - server-network
+
+volumes:
+  postgres_data:
+
+networks:
+  server-network:
